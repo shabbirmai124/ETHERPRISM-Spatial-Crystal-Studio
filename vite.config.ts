@@ -6,7 +6,7 @@ const SECURITY_HEADERS = {
   'X-Permitted-Cross-Domain-Policies': 'none',
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   'Permissions-Policy':
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), xr-spatial-tracking=(self)',
+    'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), xr-spatial-tracking=(self)',
 };
 
 export default defineConfig({

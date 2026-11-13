@@ -1,6 +1,6 @@
 {
   "name": "AetherPrism XR",
   "description": "AetherPrism XR — Interactive Spatial Crystal Resonator & Harmonic Orbit Experience authored for Md Shabbir Mia using XR Blocks and Three.js.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": []
 }

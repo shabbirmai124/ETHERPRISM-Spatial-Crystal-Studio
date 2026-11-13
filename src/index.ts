@@ -45,6 +45,18 @@ async function start(): Promise<void> {
     options.enableReticles();
     options.setAppTitle(APP_BRAND_TITLE);
     options.setAppDescription(`${APP_TAGLINE} — Created for ${APP_AUTHOR}`);
+    options.simulator.instructions.customInstructions = [
+      {
+        header: `${APP_BRAND_TITLE} — Spatial Crystal & Real-World Environments`,
+        description:
+          'Click Crystal to pulse chime & shift spectrum. Drag Crystal to move in 3D space. Scroll wheel or press +/- to zoom in/out.',
+      },
+      {
+        header: 'Environment Switcher & Front-Camera Hand Control',
+        description:
+          'Switch 4K scenic worlds (Alpine, Coast, Bamboo, Aurora) or press E. Pick Living Room / Office in Simulator Settings to blend into AR rooms, or press C to steer orbits with your webcam hand.',
+      },
+    ];
 
     if (shouldAutostartSimulator()) {
       options.xrButton.alwaysAutostartSimulator = true;

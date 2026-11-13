@@ -77,20 +77,129 @@ export const PRESET_ORDER: readonly ResonancePresetId[] = Object.freeze([
   'cryo',
 ]);
 
+export type EnvironmentScenarioId = 'alpine' | 'coastal' | 'bamboo' | 'aurora';
+
+export interface EnvironmentScenarioSpec {
+  readonly id: EnvironmentScenarioId;
+  readonly label: string;
+  readonly title: string;
+  readonly panoramaUrl: string;
+  readonly zenithTop: string;
+  readonly zenithMid: string;
+  readonly zenithHorizon: string;
+  readonly waterHex: number;
+  readonly fogHex: number;
+  readonly fogDensity: number;
+  readonly sunHex: number;
+  readonly sunIntensity: number;
+  readonly hemiSkyHex: number;
+  readonly hemiGroundHex: number;
+  readonly hemiIntensity: number;
+  readonly bollardEmissiveIntensity: number;
+}
+
+export const ENVIRONMENT_SCENARIOS: Readonly<
+  Record<EnvironmentScenarioId, EnvironmentScenarioSpec>
+> = Object.freeze({
+  alpine: Object.freeze({
+    id: 'alpine',
+    label: 'Alpine',
+    title: 'Alpine Lake Overlook',
+    panoramaUrl: '/assets/env/alpine_lake_panorama.jpg',
+    zenithTop: '#446584',
+    zenithMid: '#6a8ba6',
+    zenithHorizon: '#b9cad6',
+    waterHex: 0x244a58,
+    fogHex: 0xd9e1e6,
+    fogDensity: 0.004,
+    sunHex: 0xfff1dc,
+    sunIntensity: 2.55,
+    hemiSkyHex: 0xeef6ff,
+    hemiGroundHex: 0x3b5856,
+    hemiIntensity: 1.95,
+    bollardEmissiveIntensity: 1.05,
+  }),
+  coastal: Object.freeze({
+    id: 'coastal',
+    label: 'Coast',
+    title: 'Pacific Coastal Cliff',
+    panoramaUrl: '/assets/env/coastal_cliff_panorama.jpg',
+    zenithTop: '#3e6289',
+    zenithMid: '#7ea2bf',
+    zenithHorizon: '#f2c19c',
+    waterHex: 0x165b6d,
+    fogHex: 0xe2c7b8,
+    fogDensity: 0.0036,
+    sunHex: 0xffd7a8,
+    sunIntensity: 2.75,
+    hemiSkyHex: 0xfff1e6,
+    hemiGroundHex: 0x2c4b59,
+    hemiIntensity: 1.9,
+    bollardEmissiveIntensity: 1.25,
+  }),
+  bamboo: Object.freeze({
+    id: 'bamboo',
+    label: 'Bamboo',
+    title: 'Kyoto Bamboo Sanctuary',
+    panoramaUrl: '/assets/env/zen_bamboo_panorama.jpg',
+    zenithTop: '#5f7e7d',
+    zenithMid: '#98b2ae',
+    zenithHorizon: '#dce6de',
+    waterHex: 0x2b5244,
+    fogHex: 0xd4e0d4,
+    fogDensity: 0.0048,
+    sunHex: 0xfff4d6,
+    sunIntensity: 2.4,
+    hemiSkyHex: 0xf1f8f2,
+    hemiGroundHex: 0x354d38,
+    hemiIntensity: 2.0,
+    bollardEmissiveIntensity: 1.1,
+  }),
+  aurora: Object.freeze({
+    id: 'aurora',
+    label: 'Aurora',
+    title: 'Nordic Aurora Fjord',
+    panoramaUrl: '/assets/env/aurora_fjord_panorama.jpg',
+    zenithTop: '#081324',
+    zenithMid: '#123143',
+    zenithHorizon: '#1d4d58',
+    waterHex: 0x0f2738,
+    fogHex: 0x102536,
+    fogDensity: 0.0045,
+    sunHex: 0xa7f3d0,
+    sunIntensity: 1.85,
+    hemiSkyHex: 0x6ee7b7,
+    hemiGroundHex: 0x0f172a,
+    hemiIntensity: 1.65,
+    bollardEmissiveIntensity: 1.85,
+  }),
+});
+
+export const SCENARIO_ORDER: readonly EnvironmentScenarioId[] = Object.freeze([
+  'alpine',
+  'coastal',
+  'bamboo',
+  'aurora',
+]);
+
 export const ORBIT_SPEED_MIN = 0.25;
 export const ORBIT_SPEED_MAX = 3.0;
 export const CRYSTAL_SCALE_MIN = 0.7;
 export const CRYSTAL_SCALE_MAX = 1.5;
+export const CAMERA_ZOOM_MIN = 0.65;
+export const CAMERA_ZOOM_MAX = 2.4;
 export const FREQUENCY_MIN_HZ = 20;
 export const FREQUENCY_MAX_HZ = 8000;
 
 export interface CrystalState {
   readonly interactionCount: number;
   readonly activePresetId: ResonancePresetId;
+  readonly activeScenarioId: EnvironmentScenarioId;
   readonly customHue: number | null;
   readonly orbitDirection: 1 | -1;
   readonly orbitSpeed: number;
   readonly crystalScale: number;
+  readonly cameraZoom: number;
   readonly audioEnabled: boolean;
   readonly frequencyHz: number;
   readonly lastEventLabel: string;
@@ -117,6 +226,13 @@ export function isValidPresetId(id: unknown): id is ResonancePresetId {
   );
 }
 
+export function isValidScenarioId(id: unknown): id is EnvironmentScenarioId {
+  return (
+    typeof id === 'string' &&
+    Object.prototype.hasOwnProperty.call(ENVIRONMENT_SCENARIOS, id)
+  );
+}
+
 // Pentatonic semitone offsets for pleasant crystalline harmonic chimes
 const PENTATONIC_SEMITONES = Object.freeze([0, 2, 4, 7, 9, 12, 14, 16, 19, 24] as const);
 
@@ -139,13 +255,15 @@ export function createInitialCrystalState(): CrystalState {
   return {
     interactionCount: 0,
     activePresetId: 'spectrum',
+    activeScenarioId: 'alpine',
     customHue: null,
     orbitDirection: 1,
     orbitSpeed: 1.0,
     crystalScale: 1.0,
+    cameraZoom: 1.0,
     audioEnabled: true,
     frequencyHz: preset.baseFrequencyHz,
-    lastEventLabel: 'Ready — Pinch or click crystal to resonate',
+    lastEventLabel: 'Ready — Switch scene, drag crystal to move, or scroll to zoom',
   };
 }
 
@@ -218,6 +336,21 @@ export function selectPreset(
   };
 }
 
+export function selectScenario(
+  state: CrystalState,
+  scenarioId: EnvironmentScenarioId
+): CrystalState {
+  if (!isValidScenarioId(scenarioId)) {
+    return state;
+  }
+  const scenario = ENVIRONMENT_SCENARIOS[scenarioId];
+  return {
+    ...state,
+    activeScenarioId: scenarioId,
+    lastEventLabel: `${scenario.title} active`,
+  };
+}
+
 export function toggleOrbitDirection(state: CrystalState): CrystalState {
   const nextDirection: 1 | -1 = state.orbitDirection === 1 ? -1 : 1;
   return {
@@ -249,6 +382,18 @@ export function setCrystalScale(state: CrystalState, scale: number): CrystalStat
     ...state,
     crystalScale: clamped,
     lastEventLabel: `Prism scale ${clamped.toFixed(2)}x`,
+  };
+}
+
+export function setCameraZoom(state: CrystalState, zoom: number): CrystalState {
+  const clamped =
+    Math.round(
+      clampValue(zoom, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX, state.cameraZoom) * 100
+    ) / 100;
+  return {
+    ...state,
+    cameraZoom: clamped,
+    lastEventLabel: `View zoom ${clamped.toFixed(2)}x`,
   };
 }
 

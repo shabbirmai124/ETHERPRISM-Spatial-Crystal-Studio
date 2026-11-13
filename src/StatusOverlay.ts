@@ -1,13 +1,13 @@
 // =========================================================================
 // Project: AetherPrism XR — Spatial Crystal Resonator
 // Author: Md Shabbir Mia
-// Module: Bottom View-Space Overlay (xb.UIOverlay)
+// Module: Dismissible Top View-Space Status Overlay (xb.UIOverlay)
 // =========================================================================
 
 import * as xb from 'xrblocks';
 import {APP_AUTHOR, APP_BRAND_TITLE} from './crystalState';
 
-export function createStatusOverlay(): xb.UIOverlay {
+export function createStatusOverlay(onDismiss: () => void): xb.UIOverlay {
   const textColumn = new xb.UIPanel({
     pointerEvents: 'none',
     style: {
@@ -23,50 +23,60 @@ export function createStatusOverlay(): xb.UIOverlay {
         pointerEvents: 'none',
         style: {
           width: '100%',
-          fontSize: 17,
+          fontSize: 18,
           fontWeight: 'bold',
           textAlign: 'center',
-          color: '#f8fafc',
+          color: '#ffffff',
         },
       }),
       new xb.UIText({
-        text: 'Pinch or click crystal to pulse  •  Drag card edge to move  •  Space: Pulse  •  R: Reverse',
+        text: 'Click Crystal: Pulse  •  Drag Crystal: Move  •  Scroll/+/-: Zoom  •  E: Scene  •  C: Cam',
         pointerEvents: 'none',
         style: {
           width: '100%',
           fontSize: 13,
-          opacity: 0.85,
+          opacity: 0.92,
           textAlign: 'center',
-          color: '#cbd5e1',
+          color: '#e2e8f0',
         },
       }),
     ],
   });
 
-  const exitButton = new xb.UIExitButton({
+  const dismissButton = new xb.UIButton({
+    icon: 'close',
+    ariaLabel: 'Dismiss status banner',
     style: {
-      position: 'relative',
-      top: 0,
-      left: 0,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      padding: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
       flexShrink: 0,
+      backgroundColor: 'rgba(255, 255, 255, 0.14)',
+      ':hover': {backgroundColor: 'rgba(248, 113, 113, 0.45)'},
+      ':active': {backgroundColor: 'rgba(239, 68, 68, 0.65)'},
     },
+    onClick: () => onDismiss(),
   });
 
   const overlay = new xb.UIOverlay({
     style: {
-      width: 680,
+      width: 720,
       position: 'absolute',
-      left: '50%',
-      top: 24,
-      transform: {translateX: '-50%'},
+      top: 18,
+      alignSelf: 'center',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      padding: 14,
-      paddingLeft: 18,
+      padding: 12,
+      paddingLeft: 20,
       paddingRight: 16,
     },
-    children: [textColumn, exitButton],
+    children: [textColumn, dismissButton],
   });
   overlay.name = 'AetherPrism Status Overlay';
   return overlay;

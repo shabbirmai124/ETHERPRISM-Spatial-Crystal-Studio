@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  CAMERA_ZOOM_MAX,
+  CAMERA_ZOOM_MIN,
   CRYSTAL_SCALE_MAX,
   CRYSTAL_SCALE_MIN,
+  ENVIRONMENT_SCENARIOS,
+  type EnvironmentScenarioId,
   FREQUENCY_MAX_HZ,
   FREQUENCY_MIN_HZ,
   ORBIT_SPEED_MAX,
@@ -11,12 +15,16 @@ import {
   PRESET_ORDER,
   RESONANCE_PRESETS,
   type ResonancePresetId,
+  SCENARIO_ORDER,
   clampValue,
   computeHarmonicFrequency,
   createInitialCrystalState,
   isValidPresetId,
+  isValidScenarioId,
   resetCrystalState,
   selectPreset,
+  selectScenario,
+  setCameraZoom,
   setCrystalScale,
   setOrbitSpeed,
   stepSpringScale,
@@ -29,10 +37,12 @@ test('createInitialCrystalState initializes AetherPrism XR defaults', () => {
   const state = createInitialCrystalState();
   assert.equal(state.interactionCount, 0);
   assert.equal(state.activePresetId, 'spectrum');
+  assert.equal(state.activeScenarioId, 'alpine');
   assert.equal(state.customHue, null);
   assert.equal(state.orbitDirection, 1);
   assert.equal(state.orbitSpeed, 1.0);
   assert.equal(state.crystalScale, 1.0);
+  assert.equal(state.cameraZoom, 1.0);
   assert.equal(state.audioEnabled, true);
   assert.equal(state.frequencyHz, RESONANCE_PRESETS.spectrum.baseFrequencyHz);
 });
@@ -80,6 +90,13 @@ test('orbit speed, crystal scale, orbit direction, audio toggle, and reset work 
   state = setCrystalScale(state, 0.1);
   assert.equal(state.crystalScale, CRYSTAL_SCALE_MIN);
 
+  state = setCameraZoom(state, 8.0);
+  assert.equal(state.cameraZoom, CAMERA_ZOOM_MAX);
+  state = setCameraZoom(state, 0.1);
+  assert.equal(state.cameraZoom, CAMERA_ZOOM_MIN);
+  state = setCameraZoom(state, 1.5);
+  assert.equal(state.cameraZoom, 1.5);
+
   state = toggleOrbitDirection(state);
   assert.equal(state.orbitDirection, -1);
 
@@ -88,6 +105,7 @@ test('orbit speed, crystal scale, orbit direction, audio toggle, and reset work 
 
   const reset = resetCrystalState();
   assert.deepEqual(reset, createInitialCrystalState());
+  assert.equal(reset.cameraZoom, 1.0);
 });
 
 test('stepSpringScale converges toward target scale cleanly', () => {
@@ -110,14 +128,27 @@ test('security and fault-tolerance: rejects NaN, Infinity, invalid preset IDs, a
   const initial = createInitialCrystalState();
   assert.equal(setOrbitSpeed(initial, Number.NaN).orbitSpeed, initial.orbitSpeed);
   assert.equal(setCrystalScale(initial, Number.NaN).crystalScale, initial.crystalScale);
+  assert.equal(setCameraZoom(initial, Number.NaN).cameraZoom, initial.cameraZoom);
 
   // Reject prototype pollution / arbitrary keys
   assert.equal(isValidPresetId('__proto__'), false);
   assert.equal(isValidPresetId('constructor'), false);
   assert.equal(isValidPresetId('toString'), false);
   assert.equal(isValidPresetId('spectrum'), true);
+  assert.equal(isValidScenarioId('__proto__'), false);
+  assert.equal(isValidScenarioId('bamboo'), true);
   const unchanged = selectPreset(initial, '__proto__' as ResonancePresetId);
   assert.deepEqual(unchanged, initial);
+  const unchangedScenario = selectScenario(
+    initial,
+    'constructor' as EnvironmentScenarioId
+  );
+  assert.deepEqual(unchangedScenario, initial);
+
+  const coastal = selectScenario(initial, 'coastal');
+  assert.equal(coastal.activeScenarioId, 'coastal');
+  const aurora = selectScenario(coastal, 'aurora');
+  assert.equal(aurora.activeScenarioId, 'aurora');
 
   // Harmonic frequency remains finite and bounded
   const freqNaN = computeHarmonicFrequency(Number.NaN, Number.NaN);
@@ -138,4 +169,7 @@ test('security and fault-tolerance: rejects NaN, Infinity, invalid preset IDs, a
   assert.equal(Object.isFrozen(RESONANCE_PRESETS), true);
   assert.equal(Object.isFrozen(RESONANCE_PRESETS.spectrum), true);
   assert.equal(Object.isFrozen(PRESET_ORDER), true);
+  assert.equal(Object.isFrozen(ENVIRONMENT_SCENARIOS), true);
+  assert.equal(Object.isFrozen(ENVIRONMENT_SCENARIOS.aurora), true);
+  assert.equal(Object.isFrozen(SCENARIO_ORDER), true);
 });
